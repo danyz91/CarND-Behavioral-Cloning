@@ -1,7 +1,8 @@
 import numpy as np
 import keras
 import matplotlib.image as mpimg
-import random
+
+from image_preprocessing import preprocess_image
 
 class DataGenerator(keras.utils.Sequence):
     """Generates data for Keras"""
@@ -51,7 +52,7 @@ class DataGenerator(keras.utils.Sequence):
             curr_sample = mpimg.imread(curr_image_path)
             curr_label = self.labels[curr_image_path]
 
-            X[i,] = curr_sample
+            X[i,] = preprocess_image(curr_sample, self.dim[1], self.dim[0])
 
             y[i] = float(curr_label)
 

@@ -7,6 +7,8 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda, Cropping2D, Convolution2D
+from keras.optimizers import Adam
+
 from sklearn.model_selection import train_test_split
 import sklearn
 import math
@@ -24,7 +26,6 @@ def load_partition(dataset_dir, csv_filename='driving_log.csv', img_dir='IMG'):
     img_path = os.path.join(dataset_dir, img_dir)
 
     images = list()
-    measurements = list()
 
     partition = dict()
     labels = dict()
@@ -66,18 +67,12 @@ def load_partition(dataset_dir, csv_filename='driving_log.csv', img_dir='IMG'):
     return partition, labels
 
 
-def build_model(input_shape, loss='mse'):
+def build_model(input_shape, loss='mse', learning_rate=.001):
 
     model = Sequential()
 
-    #Normalization preproc via Lambda layer
-    model.add(Lambda(lambda x: (x/255.0) - .5, input_shape=input_shape))
-
-    #cropping
-    model.add(Cropping2D(cropping=((70, 25), (0, 0))))
-
     #Nvidia architecture
-    model.add(Convolution2D(24, 5, 5, subsample=(2, 2), activation='relu'))
+    model.add(Convolution2D(24, 5, 5, subsample=(2, 2), activation='relu',input_shape=input_shape))
     model.add(Convolution2D(36, 5, 5, subsample=(2, 2), activation='relu'))
     model.add(Convolution2D(48, 5, 5, subsample=(2, 2), activation='relu'))
     model.add(Convolution2D(64, 3, 3, activation='relu'))
@@ -89,7 +84,7 @@ def build_model(input_shape, loss='mse'):
 
     model.add(Dense(1))
 
-    model.compile(loss=loss, optimizer='adam')
+    model.compile(loss=loss, optimizer=Adam(lr=learning_rate))
 
     return model
 
@@ -100,12 +95,13 @@ def main():
     dataset_dir = '../simulator_data'
 
     # build params
-    input_shape = (160, 320, 3)
-    loss = 'mse'
+    n_channels = 3
+    INPUT_IMAGE_SHAPE = (160, 320, n_channels)
 
-    # fit params
-    valid_split = 0.2
-    epochs = 1
+    NVIDIA_INPUT_SHAPE = (66, 200, n_channels)
+
+    loss = 'mse'
+    learning_rate = 0.001
 
     # save params
     output_model_name = 'model.h5'
@@ -113,35 +109,31 @@ def main():
     # Steps
 
     # Parameters
-    params = {'dim': (160, 320),
+    params = {'dim': (NVIDIA_INPUT_SHAPE[0], NVIDIA_INPUT_SHAPE[1]),
               'batch_size': 32,
-              'n_channels': 3,
+              'n_channels': n_channels,
               'shuffle': True}
 
     partition, labels = load_partition('../simulator_data')
 
     # test preprocessing
-    image_preprocessing.test_preprocessing(partition, labels)
-    input()
+    #image_preprocessing.test_preprocessing(partition, labels)
 
     # Generators
     training_generator = DataGenerator(partition['train'], labels, **params)
     validation_generator = DataGenerator(partition['validation'], labels, **params)
 
-    model = build_model(input_shape, loss=loss)
+    model = build_model(NVIDIA_INPUT_SHAPE, loss=loss, learning_rate=learning_rate)
 
     filepath = "weights-improvement-{epoch:02d}-{val_loss:.2f}.hdf5"
     checkpoint = ModelCheckpoint(filepath=filepath, monitor='val_loss', save_best_only=True)
     stopper = EarlyStopping(monitor='val_loss', min_delta=0.0003, patience=5)
 
-    steps_per_epoch = math.ceil(len(partition['train']) / params['batch_size'])
-    validation_steps = math.ceil(len(partition['validation']) / params['batch_size'])
-
     # Train model on dataset
     history_object = model.fit_generator(generator=training_generator, validation_data=validation_generator,
                                          steps_per_epoch=len(training_generator),
-                                         validation_steps=len(validation_generator), use_multiprocessing=True, workers=8,
-                                         nb_epoch=10,  verbose=1, callbacks=[checkpoint, stopper])
+                                         validation_steps=len(validation_generator), use_multiprocessing=True,
+                                         workers=8, nb_epoch=7,  verbose=1, callbacks=[checkpoint, stopper])
 
     ### print the keys contained in the history object
     print(history_object.history.keys())
@@ -156,11 +148,8 @@ def main():
     plt.legend(['training set', 'validation set'], loc='upper right')
     plt.show()
 
-
     model.save(output_model_name)
 
 
-
-
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
