@@ -1,39 +1,21 @@
 
+import os
 import csv
 import cv2
 import numpy as np
+
 
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda, Cropping2D, Convolution2D
 from sklearn.model_selection import train_test_split
 import sklearn
 
+from PIL import Image
+
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 '''
-  with open(csv_file, 'r') as f:
-        reader = csv.reader(f)
-        for row in reader:
-            steering_center = float(row[3])
-
-            # create adjusted steering measurements for the side camera images
-            correction = 0.2 # this is a parameter to tune
-            steering_left = steering_center + correction
-            steering_right = steering_center - correction
-
-            # read in images from center, left and right cameras
-            path = "..." # fill in the path to your training IMG directory
-            img_center = process_image(np.asarray(Image.open(path + row[0])))
-            img_left = process_image(np.asarray(Image.open(path + row[1])))
-            img_right = process_image(np.asarray(Image.open(path + row[2])))
-
-            # add images and angles to data set
-            car_images.extend(img_center, img_left, img_right)
-            steering_angles.extend(steering_center, steering_left, steering_right)
-'''
-
-def load_dataset(data_path):
-
     lines = list()
 
     with open(data_path) as csvfile:
@@ -53,6 +35,47 @@ def load_dataset(data_path):
         curr_measurement = float(line[3])
         measurements.append(curr_measurement)
 
+    '''
+
+def load_dataset(dataset_dir, csv_filename='driving_log.csv', img_dir='IMG'):
+
+    csv_path = os.path.join(dataset_dir, csv_filename)
+    img_path = os.path.join(dataset_dir, img_dir)
+
+    images = list()
+    measurements = list()
+
+    with open(csv_path, 'r') as f:
+        reader = csv.reader(f)
+
+        for row in reader:
+            steering_center = float(row[3])
+
+            # create adjusted steering measurements for the side camera images
+            correction = 0.2  # this is a parameter to tune
+            steering_left = steering_center + correction
+            steering_right = steering_center - correction
+
+            # read in images from center, left and right cameras
+            path = img_path  # fill in the path to your training IMG directory
+
+            filename_center = row[0].split('\\')[-1]
+            filename_left = row[1].split('\\')[-1]
+            filename_right = row[2].split('\\')[-1]
+
+
+            img_center = mpimg.imread(os.path.join(img_path, filename_center))
+            img_left = mpimg.imread(os.path.join(img_path, filename_left))
+            img_right = mpimg.imread(os.path.join(img_path, filename_right))
+
+            # add images and angles to data set
+            images.append(img_center)
+            images.append(img_left)
+            images.append(img_right)
+
+            measurements.append(steering_center)
+            measurements.append(steering_left)
+            measurements.append(steering_right)
 
     ## Data augmentation
     augmented_images = list()
@@ -83,7 +106,7 @@ def build_model(input_shape, loss='mse'):
     model = Sequential()
 
     #Normalization preproc via Lambda layer
-    model.add(Lambda(lambda  x: (x/255.0) - .5, input_shape=input_shape))
+    model.add(Lambda(lambda x: (x/255.0) - .5, input_shape=input_shape))
 
     #cropping
     model.add(Cropping2D(cropping=((70, 25), (0, 0))))
@@ -148,8 +171,7 @@ def define_generator(samples):
 
 def trainiing_with_generator(model, train_generator, train_samples, validation_generator, validation_samples):
 
-    history_object = model.fit_generator(train_generator, samples_per_epoch=
-    len(train_samples), validation_data=
+    history_object = model.fit_generator(train_generator, samples_per_epoch=len(train_samples), validation_data=
                                          validation_generator,
                                          nb_val_samples=len(validation_samples),
                                          nb_epoch=5, verbose=1)
@@ -170,7 +192,7 @@ def trainiing_with_generator(model, train_generator, train_samples, validation_g
 def main():
 
     # dataset params
-    dataset_csv_file = '../data/driving_log.csv'
+    dataset_dir = '../simulator_data'
 
     # build params
     input_shape = (160, 320, 3)
@@ -178,12 +200,12 @@ def main():
 
     # fit params
     valid_split = 0.2
-    epochs = 7
+    epochs = 1
 
     # save params
     output_model_name = 'model.h5'
 
-    X_train, y_train = load_dataset(dataset_csv_file)
+    X_train, y_train = load_dataset(dataset_dir)
 
     model = build_model(input_shape, loss=loss)
 
