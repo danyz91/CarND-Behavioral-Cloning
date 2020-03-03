@@ -8,7 +8,7 @@ class DataGenerator(keras.utils.Sequence):
     """Generates data for Keras"""
 
     def __init__(self, list_IDs, labels, batch_size=32, dim=(160, 320), n_channels=3, shuffle=True):
-        'Initialization'
+        """Initialization"""
         self.dim = dim
         self.batch_size = batch_size
         self.labels = labels
@@ -52,7 +52,7 @@ class DataGenerator(keras.utils.Sequence):
             curr_sample = mpimg.imread(curr_image_path)
             curr_label = self.labels[curr_image_path]
 
-            X[i,] = preprocess_image(curr_sample, self.dim[1], self.dim[0])
+            X[i, ] = preprocess_image(curr_sample, self.dim[1], self.dim[0], augment=True)
 
             y[i] = float(curr_label)
 

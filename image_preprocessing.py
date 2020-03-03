@@ -6,19 +6,28 @@ import matplotlib.pyplot as plt
 import random
 
 
-def preprocess_image(image, resize_width, resize_height):
+def preprocess_image(image, resize_width=200, resize_height=66, augment=False):
+    """
+    Apply preprocessing pipeline to input image
 
+    :param image: input image
+    :param resize_width: target width
+    :param resize_height: target height
+    :param augment: a bool signaling if data augmentation must be set or not
+    :return: image with normalization, cropping and resize applied. It is also augmented if selected
+    """
     crop_region_low = 50
     crop_region_high = -25
 
-    bool_values = [True, False]
+    if augment:
+        bool_values = [True, False]
 
-    if random.choice(bool_values):
-        image = augment_brightness_camera_images(image)
-    if random.choice(bool_values):
-        image = trans_image(image)
-    if random.choice(bool_values):
-        image = add_random_shadow(image)
+        if random.choice(bool_values):
+            image = augment_brightness_camera_images(image)
+        if random.choice(bool_values):
+            image = trans_image(image)
+        if random.choice(bool_values):
+            image = add_random_shadow(image)
 
     image = normalize(image)
     image = crop_horizontally(image, crop_region_low, crop_region_high)
@@ -28,21 +37,45 @@ def preprocess_image(image, resize_width, resize_height):
 
 
 def normalize(image):
+    """
+    Apply normalization. Divide by 255 and then subtract -5
+    :param image: input image
+    :return: normalized image
+    """
     out_image = (image / 255.0) - .5
     return out_image
 
 
 def crop_horizontally(image, low, high):
+    """
+    Crops the image along x dimension
+    :param image: input image
+    :param low: value from which the selection start
+    :param high: value to which the selection ends
+    :return: cropped version of input image
+    """
     out_image = image[low:high,:,:]
     return out_image
 
 
 def resize(image, width, height):
+    """
+    Resize the image at given width and height
+    :param image: input image
+    :param width: target width
+    :param height: target height
+    :return:
+    """
     out_image = cv2.resize(image, (width, height), cv2.INTER_AREA)
     return out_image
 
 
 def augment_brightness_camera_images(image):
+    """
+    Apply a random brightness adjustment to input image. It works on Hue channel of HSV version of the image
+    :param image: input image
+    :return: a randomly brightened version of image
+    """
 
     image1 = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
     image1 = np.array(image1, dtype=np.float64)
@@ -55,6 +88,11 @@ def augment_brightness_camera_images(image):
 
 
 def trans_image(image):
+    """
+    Transpose vertically the image by a random value. The remaining part is filled with 0 pixels
+    :param image: input image
+    :return: a vertical transposed version of the image
+    """
 
     # Translation
     tr_x = 0
@@ -69,6 +107,11 @@ def trans_image(image):
 
 
 def add_random_shadow(image):
+    """
+    Apply a random shadow to the image. It works on Hue Lightness and Saturation version of image
+    :param image: input image
+    :return: a randomly shadowed version of input image
+    """
 
     top_y = 320*np.random.uniform()
     top_x = 0
@@ -96,6 +139,12 @@ def add_random_shadow(image):
 
 
 def test_brightness(samples, labels):
+    """
+    Test brightness step
+    :param samples: test samples
+    :param labels: test labels
+    :return:
+    """
 
     fig, axes = plt.subplots(1, len(samples))
     for ind, sample in enumerate(samples):
@@ -104,8 +153,13 @@ def test_brightness(samples, labels):
         axes[ind].set_title('steer: {:.2f}'.format(labels[ind]))
 
 
-
 def test_trans(samples, labels):
+    """
+    Test transposing step
+    :param samples: test samples
+    :param labels: test labels
+    :return:
+    """
 
     fig, axes = plt.subplots(1, len(samples))
     for ind, sample in enumerate(samples):
@@ -115,23 +169,40 @@ def test_trans(samples, labels):
 
 
 def test_shadow(samples, labels):
-
+    """
+    Test shadowing step
+    :param samples: test samples
+    :param labels: test labels
+    :return:
+    """
     fig, axes = plt.subplots(1, len(samples))
     for ind, sample in enumerate(samples):
         cropped = crop_horizontally(sample, 50, -25)
         axes[ind].imshow(cropped)
         axes[ind].set_title('steer: {:.2f}'.format(labels[ind]))
 
-def test_crop(samples, labels):
 
+def test_crop(samples, labels):
+    """
+    Test crop step
+    :param samples: test samples
+    :param labels: test labels
+    :return:
+    """
     fig, axes = plt.subplots(1, len(samples))
     for ind, sample in enumerate(samples):
         shadowed = add_random_shadow(sample)
         axes[ind].imshow(shadowed)
         axes[ind].set_title('steer: {:.2f}'.format(labels[ind]))
 
-def test_preprocessing(partition, labels):
 
+def test_preprocessing(partition, labels):
+    """
+    Test all preprocessing step
+    :param partition: a dictionary containing all images path
+    :param labels: a dictionary containing mapping between paths and labels
+    :return:
+    """
     TEST_SIZE = 5
 
     training_samples = partition['train']

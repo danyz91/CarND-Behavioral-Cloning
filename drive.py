@@ -16,6 +16,9 @@ from keras.models import load_model
 import h5py
 from keras import __version__ as keras_version
 
+from image_preprocessing import preprocess_image
+from model import build_model
+
 sio = socketio.Server()
 app = Flask(__name__)
 model = None
@@ -61,6 +64,10 @@ def telemetry(sid, data):
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
+
+        # Apply preprocessing
+        image_array = preprocess_image(image_array)
+
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
 
         throttle = controller.update(float(speed))
@@ -111,6 +118,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # check that model Keras version is same as local Keras version
+
     f = h5py.File(args.model, mode='r')
     model_version = f.attrs.get('keras_version')
     keras_version = str(keras_version).encode('utf8')
@@ -134,6 +142,8 @@ if __name__ == '__main__':
 
     # wrap Flask application with engineio's middleware
     app = socketio.Middleware(sio, app)
-
     # deploy as an eventlet WSGI server
     eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
+
+
+
