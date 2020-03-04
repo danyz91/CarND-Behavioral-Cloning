@@ -47,7 +47,7 @@ class SimplePIController:
 
 
 controller = SimplePIController(0.1, 0.002)
-set_speed = 9
+set_speed = 30
 controller.set_desired(set_speed)
 
 
@@ -118,16 +118,23 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # check that model Keras version is same as local Keras version
+    if args.model.endswith('.hdf5'):
 
-    f = h5py.File(args.model, mode='r')
-    model_version = f.attrs.get('keras_version')
-    keras_version = str(keras_version).encode('utf8')
+        nvidia_input_shape = (66, 200, 3)
+        model = build_model(nvidia_input_shape)
+        model.load_weights(args.model)
 
-    if model_version != keras_version:
-        print('You are using Keras version ', keras_version,
-              ', but the model was built using ', model_version)
+    elif args.model.endswith('h5'):
+        f = h5py.File(args.model, mode='r')
+        model_version = f.attrs.get('keras_version')
+        keras_version = str(keras_version).encode('utf8')
 
-    model = load_model(args.model)
+        if model_version != keras_version:
+            print('You are using Keras version ', keras_version,
+                  ', but the model was built using ', model_version)
+
+        model = load_model(args.model)
+
 
     if args.image_folder != '':
         print("Creating image folder at {}".format(args.image_folder))
