@@ -56,8 +56,7 @@ The files requested for the submission are listed below:
 - Video file showing a complete lap on test track
     [ video.mp4](./video.mp4)
 
-- A writeup report 
-    You are here! -> [Writeup](./README.md)
+- A writeup report - You are here! -> [Writeup](./README.md)
 
 
 #### 2. Additional Files and Updates
@@ -68,8 +67,7 @@ Besides requested files, in the repo there are other two files:
 
     This file contains ```DataGenerator``` class which inherits from ```keras.utils.Sequence```. 
     This class can be used as batch generator in ```fit_generator``` class. 
-    This is done in order to generate data for training on-the-fly rather tan storing the entire dataset in memory. Inspiration for such code organization came from [this Stanford's team blog post](https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly)
-    The template here provided has been extended with *ad hoc* needs of this specific problem, as discussed below.
+    This is done in order to generate data for training on-the-fly rather tan storing the entire dataset in memory. Inspiration for such code organization came from [this Stanford's team blog post](https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly). The template here provided has been extended with *ad hoc* needs of this specific problem, as discussed below.
 
 - **visualization.py**
 
@@ -297,8 +295,6 @@ The model contains two dropout layers in order to reduce overfitting (model.py l
 
 The model was trained and validated on different data sets to ensure that the model was not overfitting. For this the ```train_test_split``` from scikit-learn library has been used (code line 56).
 
-The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
-
 The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 85).
 
 <br></br>
@@ -320,6 +316,7 @@ From the inspection of the image it is clear that the model does:
 * No underfitting, since performance gets better over epochs on training set
 * No overfitting, since validation loss decreases over epochs
 
+The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
 
 <br></br>
 ### Video Results
@@ -328,7 +325,7 @@ From the inspection of the image it is clear that the model does:
 Below, there are listed video sources of some driving situations encountered.
 
 
-**Video final low resolution**
+**Complete Lap Demonstration**
 
 The video presents result in completing test track autonomously
 
