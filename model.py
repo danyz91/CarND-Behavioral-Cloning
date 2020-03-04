@@ -1,26 +1,18 @@
 
 import os
 import csv
-import cv2
-import numpy as np
-from keras.callbacks import ModelCheckpoint, EarlyStopping
 
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Dropout, Convolution2D
 from keras.optimizers import Adam
 
 from sklearn.model_selection import train_test_split
-import sklearn
-import math
-from PIL import Image
 
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 
 from data_generation import DataGenerator
-import image_preprocessing
 
-import pandas as pd
 
 def load_partition(dataset_dir, csv_filename='driving_log.csv', img_dir='IMG'):
 
